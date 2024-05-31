@@ -1,4 +1,9 @@
 numpy
 matplotlib
 opencv-python
-google-colab
+google-auth==1.4.2
+ipykernel==4.6.1
+ipython==5.5.0
+notebook==5.2.2
+six==1.12.0
+pandas==1.1.5

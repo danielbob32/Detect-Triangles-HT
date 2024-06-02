@@ -73,7 +73,7 @@ for y in range(0, height, step_size):
                     if 0 <= rho_global < 2 * diag_len:
                         hough_space[rho_global, theta_global] += 1
 
-# Detect triangles from the Hough Transform parameter space
+# Function to detect triangles from lines
 def detect_triangles(lines, edges):
     if lines is None:
         return []
@@ -90,32 +90,40 @@ def detect_triangles(lines, edges):
                 for line_a, line_b in [(line1, line2), (line2, line3), (line3, line1)]:
                     rho1, theta1 = line_a
                     rho2, theta2 = line_b
-
                     A = np.array([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]])
-                    B = np.array([[rho1], [rho2]])
-                    X = np.linalg.solve(A, B)
+                    B = np.array([rho1, rho2])
+                    if np.abs(np.linalg.det(A)) > 1e-6:  # Check for nearly parallel lines
+                        point = np.linalg.solve(A, B)
+                        if 0 <= point[0] < edges.shape[1] and 0 <= point[1] < edges.shape[0]:  # Check if the point is within the image
+                            if edges[int(point[1]), int(point[0])] > 0:  # Check if the point coincides with an edge
+                                points.append(point)
 
-                    x, y = X[0][0], X[1][0]
-                    if 0 <= x < edges.shape[1] and 0 <= y < edges.shape[0]:
-                        points.append((x, y))
-                    else:
-                        points.append((np.nan, np.nan))
-
-                triangles.append(points)
+                if len(points) == 3:
+                    triangles.append(points)
 
     return triangles
 
+# Draw the detected triangles on a black background
+triangle_image = np.zeros((image.shape[0], image.shape[1], 3), dtype=np.uint8)
+colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
+for idx, points in enumerate(triangles):
+        # Convert points to a numpy array
+    points = np.array(points)
 
-# Draw markers for triangle types
-triangles = detect_triangles(lines, edges)
-color_map = {'equilateral': (255, 0, 0), 'isosceles': (0, 255, 0), 'scalene': (0, 0, 255)}
-for points in triangles:
-    triangle_type = classify_triangle(points)
-    color = color_map[triangle_type]
-    for point in points:
-        point = tuple(map(int, point))
-        if 0 <= point[0] < hough_space.shape[1] and 0 <= point[1] < hough_space.shape[0]:
-            cv2.rectangle(hough_space, (point[0] - 2, point[1] - 2), (point[0] + 2, point[1] + 2), color, -1)
+    # Check if points contains any NaN values
+    if np.isnan(points).any():
+        # Handle NaN values (e.g., replace them with zero)
+        points[np.isnan(points)] = 0
+
+    # Check if points contains any infinite values
+    if np.isinf(points).any():
+        # Handle infinite values (e.g., replace them with a large finite number)
+        points[np.isinf(points)] = np.finfo(points.dtype).max
+
+    # Cast to int32 and reshape
+    points = points.astype(np.int32).reshape((-1, 1, 2))
+    color = colors[idx % len(colors)]
+    cv2.polylines(triangle_image, [points], isClosed=True, color=color, thickness=2)
 
 # Display the Hough transform parameter space with markers
 plt.figure(figsize=(10, 10))

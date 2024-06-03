@@ -43,6 +43,29 @@ if lines is not None:
         # Small square markers
         cv2.rectangle(hough_lines_image, (int(x0) - 2, int(y0) - 2), (int(x0) + 2, int(y0) + 2), (255, 0, 0), -1)
 
+
+def draw_lines_on_edge_map(edge_map, lines, color=(255, 255, 255)):
+    img = np.copy(edge_map)
+    if len(img.shape) == 2:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    
+    # Calculate the maximum distance needed to draw the lines across the entire image
+    diag_len = int(np.sqrt(img.shape[0]**2 + img.shape[1]**2))
+
+    for rho, theta in lines:
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        # Extend line endpoints from center to beyond the edges of the image
+        x1 = int(x0 + diag_len * (-b))
+        y1 = int(y0 + diag_len * (a))
+        x2 = int(x0 - diag_len * (-b))
+        y2 = int(y0 - diag_len * (a))
+        cv2.line(img, (x1, y1), (x2, y2), color, 2)
+    
+    return img
+
 # Draw the detected lines on the edge map
 line_image = np.copy(edges)
 if lines is not None:
@@ -142,4 +165,6 @@ plt.show()
 # Display the detected lines
 
 display_image("Detected Lines", line_image)
+edges_with_lines = draw_lines_on_edge_map(edges, lines, color=(255, 255, 255))
+display_image("Detected Lines on Edge Map", edges_with_lines)
 display_image("Detected Triangles", triangle_image, cmap=None)

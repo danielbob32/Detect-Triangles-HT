@@ -35,6 +35,8 @@ def hough_transform(edge_map, rho_res, theta_res, threshold):
             if accumulator[rho_index, theta_index] >= threshold:
                 rho = rhos[rho_index]
                 theta = thetas[theta_index]
+                if abs(np.cos(theta)) < 0.01:  # Adjust to correctly identify horizontal lines
+                    print(f"Potential horizontal line detected: rho={rho}, theta={theta}")
                 lines.append((rho, theta))
     
     return lines, accumulator
@@ -45,7 +47,9 @@ def non_maximum_suppression(lines, distance_threshold, angle_threshold):
         is_suppressed = False
         for j in range(i + 1, len(lines)):
             rho2, theta2 = lines[j]
+            #if its a line on a line, keep only one, else suppress it
             if abs(rho1 - rho2) < distance_threshold and abs(theta1 - theta2) < angle_threshold:
+                print(f"Suppressed line: rho={rho2}, theta={theta2}")
                 is_suppressed = True
                 break
         if not is_suppressed:
@@ -53,26 +57,21 @@ def non_maximum_suppression(lines, distance_threshold, angle_threshold):
     return suppressed_lines
 
 def draw_lines_on_edge_map(edge_map, lines, color=(255, 255, 255)):
-    img = np.copy(edge_map)
-    if len(img.shape) == 2:
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-    
-    # Calculate the maximum distance needed to draw the lines across the entire image
-    diag_len = int(np.sqrt(img.shape[0]**2 + img.shape[1]**2))
-
+    color=(0,255,0)
+    img_with_lines = cv2.cvtColor(edge_map, cv2.COLOR_GRAY2BGR)
     for rho, theta in lines:
         a = np.cos(theta)
         b = np.sin(theta)
         x0 = a * rho
         y0 = b * rho
-        # Extend line endpoints from center to beyond the edges of the image
-        x1 = int(x0 + diag_len * (-b))
-        y1 = int(y0 + max(diag_len * (a), 1))
-        x2 = int(x0 - diag_len * (-b))
-        y2 = int(y0 - max(diag_len * (a), 1))
-        cv2.line(img, (x1, y1), (x2, y2), color, 2)
-    
-    return img
+        x1 = int(x0 + 1000 * (-b))
+        y1 = int(y0 + 1000 * (a))
+        x2 = int(x0 - 1000 * (-b))
+        y2 = int(y0 - 1000 * (a))
+        cv2.line(img_with_lines, (x1, y1), (x2, y2), color, 2)
+    return img_with_lines
+
+
 
 def process_image(image_path, preprocess_params, hough_params, nms_params):
     try:
@@ -99,7 +98,7 @@ def process_image(image_path, preprocess_params, hough_params, nms_params):
 
     # Display the Hough transform parameter space
     plt.figure(figsize=(10, 10))
-    accumulator = np.log(accumulator + 1)
+    accumulator = np.log10(accumulator + 1)
     plt.imshow(accumulator, cmap='gray', aspect='auto')
     plt.title("Hough Transform Parameter Space")
     plt.xlabel("Theta (degrees)")
@@ -113,8 +112,8 @@ def process_image(image_path, preprocess_params, hough_params, nms_params):
 # Parameters for the image of a triangle
 image_path2 = 'Assets/group_sketch/sample_triangles.png'
 preprocess_params2 = {'d': 3, 'sigmaColor': 75, 'sigmaSpace': 75, 'blur_ksize': 5}
-hough_params2 = {'rho_res': 0.5, 'theta_res': np.pi / 180, 'threshold': 70}
-nms_params2 = {'distance_threshold': 20, 'angle_threshold': np.pi / 36}
+hough_params2 = {'rho_res': 1, 'theta_res': np.pi / 180, 'threshold': 70}
+nms_params2 = {'distance_threshold': 5, 'angle_threshold': np.pi / 30}
 
 #process_image(image_path1, preprocess_params1, hough_params1, nms_params1)
 process_image(image_path2, preprocess_params2, hough_params2, nms_params2)

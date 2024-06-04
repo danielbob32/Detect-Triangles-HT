@@ -108,26 +108,30 @@ def classify_triangle(pt1, pt2, pt3):
     return None
 
 def plot_hough_transform(window, accumulator, lines, window_number):
-    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    fig, ax = plt.subplots(1, 2, figsize=(20, 6))
     
-    ax[0].imshow(window, cmap='gray')
+    ax[0].imshow(window, cmap='gray', aspect='auto')
     ax[0].set_title(f'Window {window_number}')
-    
-    ax[1].imshow(accumulator, cmap='hot')
+    ax[0].set_xlim([0, window.shape[1]])
+    ax[0].set_ylim([window.shape[0], 0])
+
+    ax[1].imshow(accumulator, cmap='gray', aspect='auto')
     ax[1].set_title(f'Hough Transform Accumulator for Window {window_number}')
-    
+    ax[1].set_xlim([0, len(accumulator[0])])
+    ax[1].set_ylim([len(accumulator), 0])
+
     for line in lines:
         rho, theta = line
         x = np.linspace(0, window.shape[1], 1000)
         y = (rho - x * np.cos(theta)) / np.sin(theta)
         ax[0].plot(x, y, '-r')
     
+    plt.tight_layout()
     plt.show()
 
 
 
-
-def detect_triangles(image_path, preprocess_params, hough_params, nms_params, window_size, edge_threshold=0.1):
+def detect_triangles(image_path, preprocess_params, hough_params, nms_params,window_height, window_width, step_x, edge_threshold=0.1):
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     preprocessed = preprocess_image(image, **preprocess_params)
     display_image("Preprocessed Image", preprocessed)
@@ -136,14 +140,13 @@ def detect_triangles(image_path, preprocess_params, hough_params, nms_params, wi
     display_image("Edge Map", edges)
 
     height, width = edges.shape
-    step_size = 50
     triangles = []  # Initialize the list of triangles
 
     window_number = 0
 
-    for y in range(0, height - window_size, step_size):
-        for x in range(0, width - window_size, step_size):
-            window = edges[y:y + window_size, x:x + window_size]
+    for y in range(0, height - window_height + 1, window_height):
+        for x in range(0, width - window_width + 1, step_x):
+            window = edges[y:y + window_height, x:x + window_width]
             if np.sum(window) == 0:
                 continue  # Skip windows without edges
 
@@ -205,16 +208,24 @@ def detect_triangles(image_path, preprocess_params, hough_params, nms_params, wi
 def intersection(line1, line2, width, height):
     rho1, theta1 = line1
     rho2, theta2 = line2
+
+    # Check if lines are nearly parallel to avoid singular matrix error
+    if np.isclose(theta1, theta2, atol=np.pi / 180 * 5):  # 5 degrees tolerance
+        return None
+
     A = np.array([
         [np.cos(theta1), np.sin(theta1)],
         [np.cos(theta2), np.sin(theta2)]
     ])
     b = np.array([rho1, rho2])
-    x0, y0 = np.linalg.solve(A, b)
-    if 0 <= x0 < width and 0 <= y0 < height:
-        return int(x0), int(y0)
-    else:
+
+    try:
+        x0, y0 = np.linalg.solve(A, b)
+        if 0 <= x0 < width and 0 <= y0 < height:
+            return int(x0), int(y0)
+    except np.linalg.LinAlgError:
         return None
+    return None
 
 def draw_lines_on_edge_map(edge_map, lines, color=(255, 255, 255)):
     img_with_lines = cv2.cvtColor(edge_map, cv2.COLOR_GRAY2BGR)
@@ -227,23 +238,17 @@ def draw_lines_on_edge_map(edge_map, lines, color=(255, 255, 255)):
         y1 = int(y0 + 1000 * (a))
         x2 = int(x0 - 1000 * (-b))
         y2 = int(y0 - 1000 * (a))
-        cv2.line(img_with_lines, (x1, y1), (x2, y2), color, 3)
+        cv2.line(img_with_lines, (x1, y1), (x2, y2), color, 2)
     return img_with_lines
 
-# Example usage
-image_path1 = 'Assets/group_natural/top-view-triangle-sandwiches-slate-with-tomatoes_23-2148640143.png'
-preprocess_params1 = {'d': 5, 'sigmaColor': 75, 'sigmaSpace': 75, 'blur_ksize': 3}
-hough_params1 = {'rho_res': 1, 'theta_res': np.pi / 180, 'threshold': 50}
-nms_params1 = {'distance_threshold': 30, 'angle_threshold': np.pi / 18}
-window_size1 = 300  # Adjust the window size as needed
-
-#detect_triangles(image_path1, preprocess_params1, hough_params1, nms_params1, window_size1, edge_threshold=0.1)
 
 
-image_path2 = 'Assets/group_sketch/sample_triangles.png'
-preprocess_params2 = {'d': 19, 'sigmaColor': 50, 'sigmaSpace': 100, 'blur_ksize': 1}
-hough_params2 = {'rho_res': 1, 'theta_res': np.pi / 180, 'threshold': 70}
-nms_params2 = {'distance_threshold': 20, 'angle_threshold': np.pi / 30, 'important_rho_range': (-164, -163)}
-window_size2 = 200  # Adjust the window size as needed
+image_path = 'Assets/group_sketch/sample_triangles.png'
+preprocess_params = {'d': 19, 'sigmaColor': 50, 'sigmaSpace': 100, 'blur_ksize': 1}
+hough_params = {'rho_res': 1, 'theta_res': np.pi / 180, 'threshold': 70}
+nms_params = {'distance_threshold': 20, 'angle_threshold': np.pi / 30, 'important_rho_range': (-164, -163)}
+window_height = 200
+window_width = 300
+step_x = 40
 
-detect_triangles(image_path2, preprocess_params2, hough_params2, nms_params2, window_size2, edge_threshold=0.1)
+detect_triangles(image_path, preprocess_params, hough_params, nms_params,window_height, window_width, step_x, edge_threshold=0.1)

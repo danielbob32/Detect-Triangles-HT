@@ -39,20 +39,21 @@ def hough_transform(edge_map, rho_res, theta_res, threshold):
     
     return lines, accumulator
 
-def non_maximum_suppression(lines, distance_threshold, angle_threshold):
+def non_maximum_suppression(lines, distance_threshold, angle_threshold, important_rho_range):
     suppressed_lines = []
     for i, (rho1, theta1) in enumerate(lines):
         is_suppressed = False
         for j in range(i + 1, len(lines)):
             rho2, theta2 = lines[j]
             if abs(rho1 - rho2) < distance_threshold and abs(theta1 - theta2) < angle_threshold:
-                is_suppressed = True
-                break
+                if not (important_rho_range[0] < rho1 < important_rho_range[1] and abs(np.cos(theta1)) < 0.01):
+                    is_suppressed = True
+                    break
         if not is_suppressed:
             suppressed_lines.append((rho1, theta1))
     return suppressed_lines
 
-def triangle_edge_check(edge_map, pt1, pt2, pt3, threshold=0.01):
+def triangle_edge_check(edge_map, pt1, pt2, pt3, threshold=0.1):
     height, width = edge_map.shape
     
     def edge_presence(ptA, ptB):
@@ -126,7 +127,7 @@ def plot_hough_transform(window, accumulator, lines, window_number):
 
 
 
-def detect_triangles(image_path, preprocess_params, hough_params, nms_params, window_size, edge_threshold=10):
+def detect_triangles(image_path, preprocess_params, hough_params, nms_params, window_size, edge_threshold=0.1):
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     preprocessed = preprocess_image(image, **preprocess_params)
     display_image("Preprocessed Image", preprocessed)
@@ -135,7 +136,7 @@ def detect_triangles(image_path, preprocess_params, hough_params, nms_params, wi
     display_image("Edge Map", edges)
 
     height, width = edges.shape
-    step_size = window_size // 2
+    step_size = 50
     triangles = []  # Initialize the list of triangles
 
     window_number = 0
@@ -158,9 +159,9 @@ def detect_triangles(image_path, preprocess_params, hough_params, nms_params, wi
             for i in range(len(lines)):
                 for j in range(i + 1, len(lines)):
                     for k in range(j + 1, len(lines)):
-                        pt1 = intersection(lines[i], lines[j])
-                        pt2 = intersection(lines[j], lines[k])
-                        pt3 = intersection(lines[k], lines[i])
+                        pt1 = intersection(lines[i], lines[j], width, height)
+                        pt2 = intersection(lines[j], lines[k], width, height)
+                        pt3 = intersection(lines[k], lines[i], width, height)
                         if pt1 and pt2 and pt3:
                             #print('hi')
                             pt1 = (pt1[0] + x, pt1[1] + y)
@@ -201,15 +202,19 @@ def detect_triangles(image_path, preprocess_params, hough_params, nms_params, wi
     
     display_image("Detected Triangles", img_with_triangles)
 
-def intersection(line1, line2):
+def intersection(line1, line2, width, height):
     rho1, theta1 = line1
     rho2, theta2 = line2
-    A = np.array([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]])
+    A = np.array([
+        [np.cos(theta1), np.sin(theta1)],
+        [np.cos(theta2), np.sin(theta2)]
+    ])
     b = np.array([rho1, rho2])
-    if np.linalg.det(A) == 0:
-        return None  # Lines are parallel
-    x, y = np.linalg.solve(A, b)
-    return int(x), int(y)
+    x0, y0 = np.linalg.solve(A, b)
+    if 0 <= x0 < width and 0 <= y0 < height:
+        return int(x0), int(y0)
+    else:
+        return None
 
 def draw_lines_on_edge_map(edge_map, lines, color=(255, 255, 255)):
     img_with_lines = cv2.cvtColor(edge_map, cv2.COLOR_GRAY2BGR)
@@ -238,7 +243,7 @@ window_size1 = 300  # Adjust the window size as needed
 image_path2 = 'Assets/group_sketch/sample_triangles.png'
 preprocess_params2 = {'d': 19, 'sigmaColor': 50, 'sigmaSpace': 100, 'blur_ksize': 1}
 hough_params2 = {'rho_res': 1, 'theta_res': np.pi / 180, 'threshold': 70}
-nms_params2 = {'distance_threshold': 5, 'angle_threshold': np.pi / 96}
-window_size2 = 150  # Adjust the window size as needed
+nms_params2 = {'distance_threshold': 20, 'angle_threshold': np.pi / 30, 'important_rho_range': (-164, -163)}
+window_size2 = 200  # Adjust the window size as needed
 
-detect_triangles(image_path2, preprocess_params2, hough_params2, nms_params2, window_size2, edge_threshold=10)
+detect_triangles(image_path2, preprocess_params2, hough_params2, nms_params2, window_size2, edge_threshold=0.1)

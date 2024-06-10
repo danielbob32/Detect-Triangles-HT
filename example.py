@@ -259,11 +259,11 @@ def draw_lines_on_edge_map(edge_map, lines, color=(255, 255, 255)):
     return img_with_lines
 
 # Define the image path and parameters for the detection process.
-image_path = 'Assets/examples/sample_triangles.png'
+image_path = 'Assets/examples/four_triangles_example.png'
 preprocess_params = {'d': 3, 'sigmaColor': 75, 'sigmaSpace': 75, 'blur_ksize': 5}
 hough_params = {'rho_res': 0.5, 'theta_res': np.pi / 180, 'threshold': 70}
-nms_params = {'distance_threshold': 20, 'angle_threshold': np.pi / 30, 'important_rho_range': (-164, -163)}
-window_height = 200
+nms_params = {'distance_threshold': 20, 'angle_threshold': np.pi / 30, 'important_rho_range': (-900, -900)}
+window_height = 300
 window_width = 300
 step_x = 40
 

@@ -30,7 +30,6 @@ def filter_connected_components(edge_map, min_size, region):
         filtered_edge_map = np.zeros_like(region_edge_map)
         offset_x = center_x - margin_x
         offset_y = center_y - margin_y
-        #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
     elif region == 'small stars':
         center_x = int(edge_map.shape[1] / 1.15)
         center_y = int(edge_map.shape[0] / 2)
@@ -40,7 +39,6 @@ def filter_connected_components(edge_map, min_size, region):
         filtered_edge_map = np.zeros_like(region_edge_map)
         offset_x = center_x - margin_x
         offset_y = center_y - margin_y
-        #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
     elif region == 'left symbol':
         center_x = int(edge_map.shape[1] / 9.8)
         center_y = int(edge_map.shape[0] / 2.55)
@@ -50,7 +48,6 @@ def filter_connected_components(edge_map, min_size, region):
         filtered_edge_map = np.zeros_like(region_edge_map)
         offset_x = center_x - margin_x
         offset_y = center_y - margin_y
-        #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
     elif region == 'turkey':
         center_x = int(edge_map.shape[1] / 2.38)
         center_y = int(edge_map.shape[0] / 2)
@@ -60,7 +57,6 @@ def filter_connected_components(edge_map, min_size, region):
         filtered_edge_map = np.zeros_like(region_edge_map)
         offset_x = center_x - margin_x
         offset_y = center_y - margin_y
-        #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
     elif region == 'mauritania':
         center_x = int(edge_map.shape[1] / 4.5)
         center_y = int(edge_map.shape[0] / 1.25)
@@ -70,7 +66,6 @@ def filter_connected_components(edge_map, min_size, region):
         filtered_edge_map = np.zeros_like(region_edge_map)
         offset_x = center_x - margin_x
         offset_y = center_y - margin_y
-        #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
     elif region == 'yellow star':
         center_x = int(edge_map.shape[1] / 4)
         center_y = int(edge_map.shape[0] / 6)
@@ -80,7 +75,6 @@ def filter_connected_components(edge_map, min_size, region):
         filtered_edge_map = np.zeros_like(region_edge_map)
         offset_x = center_x - margin_x
         offset_y = center_y - margin_y
-        #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
     elif region == 'red wrong triangle right':
         center_x = int(edge_map.shape[1] / 1.06)
         center_y = int(edge_map.shape[0] / 1.8)
@@ -90,7 +84,6 @@ def filter_connected_components(edge_map, min_size, region):
         filtered_edge_map = np.zeros_like(region_edge_map)
         offset_x = center_x - margin_x
         offset_y = center_y - margin_y
-        #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
     elif region == 'red wrong triangle left':
         center_x = int(edge_map.shape[1] / 1.3)
         center_y = int(edge_map.shape[0] / 2.2)
@@ -100,27 +93,6 @@ def filter_connected_components(edge_map, min_size, region):
         filtered_edge_map = np.zeros_like(region_edge_map)
         offset_x = center_x - margin_x
         offset_y = center_y - margin_y
-        #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
-    # elif region == 'not a triangle_a':
-    #     center_x = int(edge_map.shape[1] / 1.5)
-    #     center_y = int(edge_map.shape[0] / 1.245)
-    #     margin_x = int(edge_map.shape[1] * 0.09)
-    #     margin_y = int(edge_map.shape[0] * 0.05)
-    #     region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-    #     filtered_edge_map = np.zeros_like(region_edge_map)
-    #     offset_x = center_x - margin_x
-    #     offset_y = center_y - margin_y
-    #     #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
-    # elif region == 'not a triangle_b':
-    #     center_x = int(edge_map.shape[1] / 2)
-    #     center_y = int(edge_map.shape[0] / 1.31)
-    #     margin_x = int(edge_map.shape[1] * 0.019)
-    #     margin_y = int(edge_map.shape[0] * 0.019)
-    #     region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-    #     filtered_edge_map = np.zeros_like(region_edge_map)
-    #     offset_x = center_x - margin_x
-    #     offset_y = center_y - margin_y
-    #     #cv2.rectangle(edge_map, (center_x - margin_x, center_y - margin_y), (center_x + margin_x, center_y + margin_y), (255, 255, 255), 2)
     else:
         region_edge_map = edge_map
         filtered_edge_map = np.zeros_like(region_edge_map)
@@ -131,26 +103,8 @@ def filter_connected_components(edge_map, min_size, region):
         if stats[i, cv2.CC_STAT_AREA] >= min_size:
             filtered_edge_map[labels == i] = 255
 
-    if region == 'swiss':
+    if region in ['swiss', 'small stars', 'left symbol', 'turkey', 'mauritania', 'yellow star', 'red wrong triangle right', 'red wrong triangle left']:
         edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    elif region == 'small stars':
-        edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    elif region == 'left symbol':
-        edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    elif region == 'turkey':
-        edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    elif region == 'mauritania':
-        edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    elif region == 'yellow star':
-        edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    elif region == 'red wrong triangle right':
-        edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    elif region == 'red wrong triangle left':
-        edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    # elif region == 'not a triangle_a':
-    #     edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    # elif region == 'not a triangle_b':
-    #     edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
     else:
         edge_map = filtered_edge_map
 
@@ -193,8 +147,8 @@ def non_maximum_suppression(lines, distance_threshold, angle_threshold):
         for j in range(i + 1, len(lines)):
             rho2, theta2 = lines[j]
             if abs(rho1 - rho2) < distance_threshold and abs(theta1 - theta2) < angle_threshold:
-                    is_suppressed = True
-                    break
+                is_suppressed = True
+                break
         if not is_suppressed:
             suppressed_lines.append((rho1, theta1))
     return suppressed_lines
@@ -218,7 +172,10 @@ def triangle_edge_check(edge_map, pt1, pt2, pt3, threshold):
     edge2 = edge_presence(pt2, pt3)
     edge3 = edge_presence(pt3, pt1)
     
-    return (edge1 + edge2 + edge3) / 3 > threshold
+    edge_avg = (edge1 + edge2 + edge3) / 3
+    print(f"Triangle Check: pt1={pt1}, pt2={pt2}, pt3={pt3}, edge_avg={edge_avg}")
+    
+    return edge_avg > threshold
 
 # Classify the type of triangle based on side lengths and angles.
 def classify_triangle(pt1, pt2, pt3):
@@ -256,7 +213,7 @@ def classify_triangle(pt1, pt2, pt3):
 
 # Plot the Hough Transform results and detected lines.
 def plot_hough_transform(window, accumulator, lines, window_number):
-    fig, ax = plt.subplots(1, 2, figsize=(20, 6))
+    fig, ax = plt.subplots(1, 2, figsize=(10, 3))
     
     ax[0].imshow(window, cmap='gray', aspect='auto')
     ax[0].set_title(f'Window {window_number}')
@@ -303,8 +260,6 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
         filtered_edges = filter_connected_components(filtered_edges, 100, region='yellow star')
         filtered_edges = filter_connected_components(filtered_edges, 300, region='red wrong triangle right')
         filtered_edges = filter_connected_components(filtered_edges, 300, region='red wrong triangle left')
-        # filtered_edges = filter_connected_components(filtered_edges, 300, region='not a triangle_a')
-        # filtered_edges = filter_connected_components(filtered_edges, 300, region='not a triangle_b')
         filtered_edges = filter_connected_components(filtered_edges, 96, region='none')
 
     display_image("Filtered Edge Map", filtered_edges)
@@ -322,6 +277,8 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
     for y in range(0, height - window_height + 1, step_y):
         for x in range(0, width - window_width + 1, step_x):
             window = filtered_edges[y:y + window_height, x:x + window_width]
+            print(f"Processing Window {window_number}: x={x}, y={y}, x_end={x + window_width}, y_end={y + window_height}")
+
             if np.sum(window) == 0:
                 continue
 
@@ -353,6 +310,7 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
                             if triangle_edge_check(filtered_edges, pt1, pt2, pt3, edge_threshold):
                                 triangle_type = classify_triangle(pt1, pt2, pt3)
                                 if triangle_type:
+                                    print(f"Triangle Detected: Type={triangle_type}, Points={pt1, pt2, pt3}")
                                     triangles.append((triangle_type, [pt1, pt2, pt3]))
 
     # Final display of detected lines and triangles.
@@ -364,7 +322,7 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
     edges_with_lines = draw_lines_on_edge_map(filtered_edges, lines, color=(255, 255, 255))
     display_image("Detected Lines on Edge Map", edges_with_lines)
 
-    print(triangles)  # Print detected triangles for reference.
+    print("Detected Triangles:", triangles)  # Print detected triangles for reference.
     
     # Check if a point is within the bounds of the image.
     def is_within_bounds(point, height, width):
@@ -392,7 +350,7 @@ def intersection(line1, line2, width, height):
     rho2, theta2 = line2
 
     # Check if lines are nearly parallel to avoid singular matrix error
-    if np.isclose(theta1, theta2, atol=np.pi / 180 * 1):  # 5 degrees tolerance
+    if np.isclose(theta1, theta2, atol=np.pi / 180 * 1):
         return None
 
     A = np.array([
@@ -440,4 +398,4 @@ lower = 50
 higher = 100
 diff = 40
 # Call the main function to start the triangle detection process.
-detect_triangles(image_path, name, lower, higher, preprocess_params, diff, hough_params, nms_params, window_height, window_width, step_x, step_y, edge_threshold=0.2, min_component_size=min_component_size, region=region)
+detect_triangles(image_path, name, lower, higher, preprocess_params, diff, hough_params, nms_params, window_height, window_width, step_x, step_y, edge_threshold=0.15, min_component_size=min_component_size, region=region)

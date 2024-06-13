@@ -87,58 +87,7 @@ def is_point_on_edge(point, edge_map, radius=3):
                     if edge_map[y + dy, x + dx] != 0:
                         return True
     return False
-# Find the longest edge in the edges in proximity to the given points.
-def find_longest_edge_in_edge_map(edge_map, proximity_threshold=1):
-    lines, _ = hough_transform(edge_map, **hough_params)
-    longest_edge = None
-    max_length = 0
-    best_segment = []
 
-    def edge_length_in_proximity(x1, y1, x2, y2):
-        x_values = np.linspace(x1, x2, num=1000).astype(int)  # Increased sampling points
-        y_values = np.linspace(y1, y2, num=1000).astype(int)  # Increased sampling points
-        valid_indices = (x_values >= 0) & (x_values < edge_map.shape[1]) & (y_values >= 0) & (y_values < edge_map.shape[0])
-        x_values = x_values[valid_indices]
-        y_values = y_values[valid_indices]
-
-        count = 0
-        points = []
-        current_segment = []
-        max_segment = []
-
-        for x, y in zip(x_values, y_values):
-            if np.any(edge_map[max(0, y-proximity_threshold):min(edge_map.shape[0], y+proximity_threshold+1), 
-                              max(0, x-proximity_threshold):min(edge_map.shape[1], x+proximity_threshold+1)] != 0):
-                count += 1
-                points.append((x, y))
-                current_segment.append((x, y))
-            else:
-                if len(current_segment) > len(max_segment):
-                    max_segment = current_segment
-                current_segment = []
-
-        if len(current_segment) > len(max_segment):
-            max_segment = current_segment
-
-        return len(max_segment), max_segment
-
-    for line in lines:
-        rho, theta, pid = line
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
-        x1 = int(x0 + 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        x2 = int(x0 - 1000 * (-b))
-        y2 = int(y0 - 1000 * (a))
-        length, segment = edge_length_in_proximity(x1, y1, x2, y2)
-        if length > max_length:
-            max_length = length
-            longest_edge = (x1, y1, x2, y2)
-            best_segment = segment
-    
-    return longest_edge, best_segment
 
 # Find the length between two points.
 def length(ptA, ptB):
@@ -152,10 +101,8 @@ def angle(ptA, ptB, ptC):
     angle = np.arccos(cos_angle)
     return np.degrees(angle)
 
-
-    
 # Check if the edges form a triangle based on a threshold, and ensure all points are on edges.
-def triangle_edge_check(edge_map, pt1, pt2, pt3, threshold, max_edge_length, radius=3, zero_threshold=120):
+def triangle_edge_check(edge_map, pt1, pt2, pt3, threshold, max_edge_length, radius=3, zero_threshold=400):
     height, width = edge_map.shape
     
     # Ensure all points are on the edges
@@ -164,29 +111,43 @@ def triangle_edge_check(edge_map, pt1, pt2, pt3, threshold, max_edge_length, rad
     
     # Calculate the presence of edges between points, with penalty for zero-valued pixels.
     def edge_presence(ptA, ptB):
-        x_values = np.linspace(ptA[0], ptB[0], num=200).astype(int)
-        y_values = np.linspace(ptA[1], ptB[1], num=200).astype(int)
+        x_values = np.linspace(ptA[0], ptB[0], num=1000).astype(int)
+        y_values = np.linspace(ptA[1], ptB[1], num=1000).astype(int)
         valid_indices = (x_values >= 0) & (x_values < width) & (y_values >= 0) & (y_values < height)
         x_values = x_values[valid_indices]
         y_values = y_values[valid_indices]
         if len(x_values) == 0 or len(y_values) == 0:
             return 0
-        
+        temp_point=[]
         zero_count = 0
+        plt.imshow(edge_map, cmap='gray')
+        plt.scatter(x_values, y_values, c='g', s=1)
         for x, y in zip(x_values, y_values):
-            if edge_map[y, x] == 0:
+            if edge_map[y, x] == 255:
+                temp_point.append((x,y))
                 zero_count += 1
                 if zero_count > zero_threshold:  # Adjust the threshold as needed
                     print(f"Disqualified: ({ptA}, {ptB}) with {zero_count} zeros")
+                    plt.imshow(edge_map, cmap='gray')
+                    plt.scatter(x_values, y_values, c='r', s=1)
                     return 0  # Return 0 to penalize, but not disqualify completely
-        
-        return (len(x_values) - zero_count) / len(x_values)
-
-    edge1 = edge_presence(pt1, pt2)
-    edge2 = edge_presence(pt2, pt3)
-    edge3 = edge_presence(pt3, pt1)
     
-    print(f"Edge Presence: {edge1}, {edge2}, {edge3}")
+        return (len(x_values) - zero_count) / len(x_values)
+    
+    print ("------start------")
+    edge1 = edge_presence(pt1, pt2)
+    print(f"Edge 1: {edge1}")
+    edge2 = edge_presence(pt2, pt3)
+    print(f"Edge 2: {edge2}")
+    edge3 = edge_presence(pt3, pt1)
+    print(f"Edge 3: {edge3}")
+    print ("------end------")
+    
+    if edge1 == 0 or edge2 == 0 or edge3 == 0:
+        return False
+    
+    if edge1 < threshold or edge2 < threshold or edge3 < threshold:
+        return False
     
     length1 = length(pt1, pt2)
     length2 = length(pt2, pt3)
@@ -221,7 +182,7 @@ def classify_triangle(pt1, pt2, pt3):
     # Classify the triangle based on the side lengths and angles.
     if np.isclose(len1, len2, atol=5) and np.isclose(len2, len3, atol=5):
         return "equilateral"
-    if np.isclose(len1, len2, atol=1.5) or np.isclose(len2, len3, atol=1.5) or np.isclose(len3, len1, atol=1.5):
+    if np.isclose(len1, len2, atol=1) or np.isclose(len2, len3, atol=1) or np.isclose(len3, len1, atol=1):
         return "isosceles"
     return None
 
@@ -256,7 +217,7 @@ def plot_hough_transform(window, accumulator, lines, window_number, triangle_poi
     plt.show()
     
 # Main function to detect triangles in an image using edge detection and Hough Transform.
-def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, hough_params, nms_params, window_height, window_width, step_x, step_y, edge_threshold, min_component_size, region):
+def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, hough_params, nms_params, window_height, window_width, step_x, step_y, edge_threshold, min_component_size, region, window_number_to_check=None):
     
     # Read and display the input image.
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
@@ -284,20 +245,20 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
 
     height, width = filtered_edges.shape
     triangles = []  # List to store detected triangles.
-
-    window_number = 0
-    
     # Calculate adjusted steps
     step_x = (width - window_width) // ((width - window_width) // step_x) if (width - window_width) > step_x else step_x
     step_y = (height - window_height) // ((height - window_height) // step_y) if (height - window_height) > step_y else step_y
 
-    # Process each window to detect lines and triangles.
-    for y in range(0, height - window_height + 1, step_y):
-        for x in range(0, width - window_width + 1, step_x):
-            window = filtered_edges[y:y + window_height, x:x + window_width]
-            if np.sum(window) == 0:
-                continue
+    if window_number_to_check is not None:
+        # Calculate the position of the specific window to check
+        total_windows_x = (width - window_width) // step_x + 1
+        window_x = window_number_to_check % total_windows_x
+        window_y = window_number_to_check // total_windows_x
+        x = window_x * step_x
+        y = window_y * step_y
 
+        window = filtered_edges[y:y + window_height, x:x + window_width]
+        if np.sum(window) != 0:
             lines, accumulator = hough_transform(window, **hough_params)
             accumulator = np.log10(accumulator + 1)  # Logarithmic scaling for better visibility
             lines = non_maximum_suppression(lines, **nms_params)
@@ -336,8 +297,57 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
                                     else:
                                         triangle_colors.extend(['r', 'r', 'r'])  # Red for right triangle
             
-            plot_hough_transform(window, accumulator, lines, window_number, triangle_points, triangle_colors)
-            window_number += 1
+            plot_hough_transform(window, accumulator, lines, window_number_to_check, triangle_points, triangle_colors)
+            
+    else:
+        window_number = 0
+        for y in range(0, height - window_height + 1, step_y):
+            for x in range(0, width - window_width + 1, step_x):
+                window = filtered_edges[y:y + window_height, x:x + window_width]
+                if np.sum(window) == 0:
+                    window_number += 1
+                    continue
+
+                lines, accumulator = hough_transform(window, **hough_params)
+                accumulator = np.log10(accumulator + 1)  # Logarithmic scaling for better visibility
+                lines = non_maximum_suppression(lines, **nms_params)
+                
+                triangle_points = []
+                triangle_colors = []
+                
+                # Check for triangles formed by the detected lines.
+                for i in range(len(lines)):
+                    for j in range(i + 1, len(lines)):
+                        for k in range(j + 1, len(lines)):
+                            pt1 = intersection(lines[i], lines[j], window.shape[1], window.shape[0])
+                            pt2 = intersection(lines[j], lines[k], window.shape[1], window.shape[0])
+                            pt3 = intersection(lines[k], lines[i], window.shape[1], window.shape[0])
+                            if pt1 and pt2 and pt3:
+                                pt1 = (pt1[0] + x, pt1[1] + y)
+                                pt2 = (pt2[0] + x, pt2[1] + y)
+                                pt3 = (pt3[0] + x, pt3[1] + y)
+                                if pt1 == pt2 or pt2 == pt3 or pt3 == pt1:
+                                    continue
+                                if abs(pt1[0] - pt2[0]) <= diff and abs(pt1[1] - pt2[1]) <= diff:
+                                    continue
+                                if abs(pt2[0] - pt3[0]) <= diff and abs(pt2[1] - pt3[1]) <= diff:
+                                    continue
+                                if abs(pt3[0] - pt1[0]) <= diff and abs(pt3[1] - pt1[1]) <= diff:
+                                    continue
+                                if triangle_edge_check(filtered_edges, pt1, pt2, pt3, edge_threshold, max_edge_length=188, radius=3, zero_threshold=400):
+                                    triangle_type = classify_triangle(pt1, pt2, pt3)
+                                    if triangle_type:
+                                        triangles.append((triangle_type, [pt1, pt2, pt3]))
+                                        triangle_points.extend([pt1, pt2, pt3])
+                                        if triangle_type == "equilateral":
+                                            triangle_colors.extend(['b', 'b', 'b'])  # Blue for equilateral
+                                        elif triangle_type == "isosceles":
+                                            triangle_colors.extend(['g', 'g', 'g'])  # Green for isosceles
+                                        else:
+                                            triangle_colors.extend(['r', 'r', 'r'])  # Red for right triangle
+                
+                plot_hough_transform(window, accumulator, lines, window_number, triangle_points, triangle_colors)
+                window_number += 1
             
     # Check if a point is within the bounds of the image.
     def is_within_bounds(point, height, width):
@@ -358,7 +368,7 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
             cv2.polylines(img_with_triangles, [pts], isClosed=True, color=color, thickness=2)
     
     display_image("Detected Triangles", img_with_triangles)
-  
+
 # Check for intersection between two lines in Hough space.
 def intersection(line1, line2, width, height):
     rho1, theta1, pid1 = line1
@@ -413,4 +423,5 @@ higher = 100
 diff = 40
 
 # Call the main function to start the triangle detection process.
-detect_triangles(image_path, name, lower, higher, preprocess_params, diff, hough_params, nms_params, window_height, window_width, step_x, step_y, edge_threshold=0.02, min_component_size=min_component_size, region=region)
+# To check a specific window (e.g., window 10), set window_number_to_check to 10.
+detect_triangles(image_path, name, lower, higher, preprocess_params, diff, hough_params, nms_params, window_height, window_width, step_x, step_y, edge_threshold=0.03, min_component_size=min_component_size, region=region, window_number_to_check=10)

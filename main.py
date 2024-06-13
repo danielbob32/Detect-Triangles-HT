@@ -3,7 +3,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # Display an image with a title and specified colormap.
 def display_image(title, img, cmap='gray'):
     plt.figure(figsize=(5, 5))
@@ -18,97 +17,19 @@ def preprocess_image(image, d, sigmaColor, sigmaSpace, blur_ksize):
     blurred = cv2.GaussianBlur(bilateral_filtered, (blur_ksize, blur_ksize), 0)
     return blurred
 
-def filter_connected_components(edge_map, min_size, region):
-    offset_y = 0
-    offset_x = 0
-    if region == 'swiss':
-        center_x = int(edge_map.shape[1] / 1.55)
-        center_y = int(edge_map.shape[0] / 3.5)
-        margin_x = int(edge_map.shape[1] * 0.12)
-        margin_y = int(edge_map.shape[0] * 0.12)
-        region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-        filtered_edge_map = np.zeros_like(region_edge_map)
-        offset_x = center_x - margin_x
-        offset_y = center_y - margin_y
-    elif region == 'small stars':
-        center_x = int(edge_map.shape[1] / 1.15)
-        center_y = int(edge_map.shape[0] / 2)
-        margin_x = int(edge_map.shape[1] * 0.03)
-        margin_y = int(edge_map.shape[0] * 0.03)
-        region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-        filtered_edge_map = np.zeros_like(region_edge_map)
-        offset_x = center_x - margin_x
-        offset_y = center_y - margin_y
-    elif region == 'left symbol':
-        center_x = int(edge_map.shape[1] / 9.8)
-        center_y = int(edge_map.shape[0] / 2.55)
-        margin_x = int(edge_map.shape[1] * 0.037)
-        margin_y = int(edge_map.shape[0] * 0.045)
-        region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-        filtered_edge_map = np.zeros_like(region_edge_map)
-        offset_x = center_x - margin_x
-        offset_y = center_y - margin_y
-    elif region == 'turkey':
-        center_x = int(edge_map.shape[1] / 2.38)
-        center_y = int(edge_map.shape[0] / 2)
-        margin_x = int(edge_map.shape[1] * 0.09)
-        margin_y = int(edge_map.shape[0] * 0.1)
-        region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-        filtered_edge_map = np.zeros_like(region_edge_map)
-        offset_x = center_x - margin_x
-        offset_y = center_y - margin_y
-    elif region == 'mauritania':
-        center_x = int(edge_map.shape[1] / 4.5)
-        center_y = int(edge_map.shape[0] / 1.25)
-        margin_x = int(edge_map.shape[1] * 0.17)
-        margin_y = int(edge_map.shape[0] * 0.17)
-        region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-        filtered_edge_map = np.zeros_like(region_edge_map)
-        offset_x = center_x - margin_x
-        offset_y = center_y - margin_y
-    elif region == 'yellow star':
-        center_x = int(edge_map.shape[1] / 4)
-        center_y = int(edge_map.shape[0] / 6)
-        margin_x = int(edge_map.shape[1] * 0.03)
-        margin_y = int(edge_map.shape[0] * 0.03)
-        region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-        filtered_edge_map = np.zeros_like(region_edge_map)
-        offset_x = center_x - margin_x
-        offset_y = center_y - margin_y
-    elif region == 'red wrong triangle right':
-        center_x = int(edge_map.shape[1] / 1.06)
-        center_y = int(edge_map.shape[0] / 1.8)
-        margin_x = int(edge_map.shape[1] * 0.03)
-        margin_y = int(edge_map.shape[0] * 0.14)
-        region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-        filtered_edge_map = np.zeros_like(region_edge_map)
-        offset_x = center_x - margin_x
-        offset_y = center_y - margin_y
-    elif region == 'red wrong triangle left':
-        center_x = int(edge_map.shape[1] / 1.3)
-        center_y = int(edge_map.shape[0] / 2.2)
-        margin_x = int(edge_map.shape[1] * 0.04)
-        margin_y = int(edge_map.shape[0] * 0.13)
-        region_edge_map = edge_map[center_y - margin_y:center_y + margin_y, center_x - margin_x:center_x + margin_x]
-        filtered_edge_map = np.zeros_like(region_edge_map)
-        offset_x = center_x - margin_x
-        offset_y = center_y - margin_y
-    else:
-        region_edge_map = edge_map
-        filtered_edge_map = np.zeros_like(region_edge_map)
+def filter_connected_components(edge_map, min_size):
+    # Perform connected components analysis
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(edge_map, connectivity=8)
 
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(region_edge_map, connectivity=8)
+    # Create an empty image to store the filtered components
+    filtered_edge_map = np.zeros_like(edge_map)
 
+    # Filter out small components
     for i in range(1, num_labels):
         if stats[i, cv2.CC_STAT_AREA] >= min_size:
             filtered_edge_map[labels == i] = 255
 
-    if region in ['swiss', 'small stars', 'left symbol', 'turkey', 'mauritania', 'yellow star', 'red wrong triangle right', 'red wrong triangle left']:
-        edge_map[offset_y:offset_y + filtered_edge_map.shape[0], offset_x:offset_x + filtered_edge_map.shape[1]] = filtered_edge_map
-    else:
-        edge_map = filtered_edge_map
-
-    return edge_map
+    return filtered_edge_map
 
 # Implement the Hough Transform to detect lines in the edge map.
 def hough_transform(edge_map, rho_res, theta_res, threshold):
@@ -155,7 +76,18 @@ def non_maximum_suppression(lines, distance_threshold, angle_threshold):
             suppressed_lines.append((rho1, theta1, pid1))
     return suppressed_lines
 
-# Find the longest edge in the edges in proximity to the given points. NOT WORKING !!!!!! FIX
+# Check if a point is on the edge in the edge map with a certain radius.
+def is_point_on_edge(point, edge_map, radius=3):
+    x, y = point
+    height, width = edge_map.shape
+    for dx in range(-radius, radius + 1):
+        for dy in range(-radius, radius + 1):
+            if dx**2 + dy**2 <= radius**2:
+                if 0 <= x + dx < width and 0 <= y + dy < height:
+                    if edge_map[y + dy, x + dx] != 0:
+                        return True
+    return False
+# Find the longest edge in the edges in proximity to the given points.
 def find_longest_edge_in_edge_map(edge_map, proximity_threshold=1):
     lines, _ = hough_transform(edge_map, **hough_params)
     longest_edge = None
@@ -210,38 +142,55 @@ def find_longest_edge_in_edge_map(edge_map, proximity_threshold=1):
 
 # Find the length between two points.
 def length(ptA, ptB):
-        return np.sqrt((ptA[0] - ptB[0]) ** 2 + (ptA[1] - ptB[1]) ** 2)
-    
-# find the angle between three points.    
+    return np.sqrt((ptA[0] - ptB[0]) ** 2 + (ptA[1] - ptB[1]) ** 2)
+
+# Find the angle between three points.    
 def angle(ptA, ptB, ptC):
     ba = np.array(ptA) - np.array(ptB)
     bc = np.array(ptC) - np.array(ptB)
     cos_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
     angle = np.arccos(cos_angle)
     return np.degrees(angle)
-       
-# Check if the edges form a triangle based on a threshold.
-def triangle_edge_check(edge_map, pt1, pt2, pt3, threshold, max_edge_length):
+
+
+    
+# Check if the edges form a triangle based on a threshold, and ensure all points are on edges.
+def triangle_edge_check(edge_map, pt1, pt2, pt3, threshold, max_edge_length, radius=3, zero_threshold=120):
     height, width = edge_map.shape
     
-    # Calculate the presence of edges between points.
+    # Ensure all points are on the edges
+    if not (is_point_on_edge(pt1, edge_map, radius=radius) and is_point_on_edge(pt2, edge_map, radius=radius) and is_point_on_edge(pt3, edge_map, radius=radius)):
+        return False
+    
+    # Calculate the presence of edges between points, with penalty for zero-valued pixels.
     def edge_presence(ptA, ptB):
-        x_values = np.linspace(ptA[0], ptB[0], num=50).astype(int)
-        y_values = np.linspace(ptA[1], ptB[1], num=50).astype(int)
+        x_values = np.linspace(ptA[0], ptB[0], num=200).astype(int)
+        y_values = np.linspace(ptA[1], ptB[1], num=200).astype(int)
         valid_indices = (x_values >= 0) & (x_values < width) & (y_values >= 0) & (y_values < height)
         x_values = x_values[valid_indices]
         y_values = y_values[valid_indices]
         if len(x_values) == 0 or len(y_values) == 0:
             return 0
-        return np.sum(edge_map[y_values, x_values] != 0) / len(x_values)
+        
+        zero_count = 0
+        for x, y in zip(x_values, y_values):
+            if edge_map[y, x] == 0:
+                zero_count += 1
+                if zero_count > zero_threshold:  # Adjust the threshold as needed
+                    print(f"Disqualified: ({ptA}, {ptB}) with {zero_count} zeros")
+                    return 0  # Return 0 to penalize, but not disqualify completely
+        
+        return (len(x_values) - zero_count) / len(x_values)
 
     edge1 = edge_presence(pt1, pt2)
     edge2 = edge_presence(pt2, pt3)
     edge3 = edge_presence(pt3, pt1)
     
-    length1=length(pt1,pt2)
-    length2=length(pt2,pt3)
-    length3=length(pt3,pt1)
+    print(f"Edge Presence: {edge1}, {edge2}, {edge3}")
+    
+    length1 = length(pt1, pt2)
+    length2 = length(pt2, pt3)
+    length3 = length(pt3, pt1)
     
     edge_avg = (edge1 + edge2 + edge3) / 3
     max_edge_length = 188  # works for flags1.jpg but need to automate this !!!!!!!!!!!!!!!
@@ -251,14 +200,13 @@ def triangle_edge_check(edge_map, pt1, pt2, pt3, threshold, max_edge_length):
         return False
     
     # Check if any edge length is less than minimum edge length
-    if length1 < 73 or length2 < 73 or length3 < 73: # works for flags1.jpg but need to automate this !!!!!!!!!!!!!!!
+    if length1 < 73 or length2 < 73 or length3 < 73:  # works for flags1.jpg but need to automate this !!!!!!!!!!!!!!!
         return False
     
     return edge_avg > threshold
 
 # Classify the type of triangle based on side lengths and angles.
 def classify_triangle(pt1, pt2, pt3):
-
     len1 = length(pt1, pt2)
     len2 = length(pt2, pt3)
     len3 = length(pt3, pt1)
@@ -279,7 +227,7 @@ def classify_triangle(pt1, pt2, pt3):
 
 # Plot the Hough Transform results and detected lines.
 def plot_hough_transform(window, accumulator, lines, window_number, triangle_points, triangle_colors):
-    fig, ax = plt.subplots(1, 2, figsize=(15, 6))
+    fig, ax = plt.subplots(1, 2, figsize=(20, 6))
     
     ax[0].imshow(window, cmap='gray', aspect='auto')
     ax[0].set_title(f'Window {window_number}')
@@ -327,17 +275,7 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
     edges = cv2.Canny(image, lower, higher)
     
     if name == 'flags':
-        filtered_edges = filter_connected_components(edges, min_component_size, region)
-        filtered_edges = filter_connected_components(filtered_edges, 200, 'small stars')
-        filtered_edges = filter_connected_components(filtered_edges, 600, 'left symbol')
-        filtered_edges = filter_connected_components(filtered_edges, 900, 'swiss')
-        filtered_edges = filter_connected_components(filtered_edges, 300, 'turkey')
-        filtered_edges = filter_connected_components(filtered_edges, 900, 'mauritania')
-        filtered_edges = filter_connected_components(filtered_edges, 100, 'yellow star')
-        filtered_edges = filter_connected_components(filtered_edges, 300, 'red wrong triangle right')
-        filtered_edges = filter_connected_components(filtered_edges, 300, 'red wrong triangle left')
-        filtered_edges = filter_connected_components(filtered_edges, 96, 'none')
-        
+        filtered_edges = filter_connected_components(edges, min_component_size)
 
     # Display the preprocessed image and the extracted edges.
     plt.imshow(filtered_edges, cmap='gray')
@@ -360,7 +298,6 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
             if np.sum(window) == 0:
                 continue
 
-               
             lines, accumulator = hough_transform(window, **hough_params)
             accumulator = np.log10(accumulator + 1)  # Logarithmic scaling for better visibility
             lines = non_maximum_suppression(lines, **nms_params)
@@ -422,7 +359,6 @@ def detect_triangles(image_path, name, lower, higher, preprocess_params, diff, h
     
     display_image("Detected Triangles", img_with_triangles)
   
-
 # Check for intersection between two lines in Hough space.
 def intersection(line1, line2, width, height):
     rho1, theta1, pid1 = line1
@@ -477,5 +413,4 @@ higher = 100
 diff = 40
 
 # Call the main function to start the triangle detection process.
-detect_triangles(image_path, name, lower, higher, preprocess_params, diff, hough_params, nms_params, window_height, window_width, step_x, step_y, edge_threshold=0.03, min_component_size=min_component_size, region=region)
-
+detect_triangles(image_path, name, lower, higher, preprocess_params, diff, hough_params, nms_params, window_height, window_width, step_x, step_y, edge_threshold=0.02, min_component_size=min_component_size, region=region)
